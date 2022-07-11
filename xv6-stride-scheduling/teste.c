@@ -3,7 +3,6 @@
 #include "stat.h"
 #include "user.h"
 #include "syscall.h"
-#include "rand.h"
 
 int teste0(void);
 int teste1(void);

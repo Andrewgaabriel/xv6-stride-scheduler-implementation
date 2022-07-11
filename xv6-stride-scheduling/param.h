@@ -12,4 +12,4 @@
 #define NBUF         (MAXOPBLOCKS*3)  // size of disk block cache
 #define FSSIZE       1000       // size of file system in blocks
 #define NBILHETES_MIN 10        // ! mínimo de bilhetes por processo ------------------------------------------------------------------------
-#define NBILHETES_MAX 1000      // ! máximo de bilhetes por processo  ------------------------------------------------------------------------
+#define NBILHETES_MAX 5000      // ! máximo de bilhetes por processo  ------------------------------------------------------------------------

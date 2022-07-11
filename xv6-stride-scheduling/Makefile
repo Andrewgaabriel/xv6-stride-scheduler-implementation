@@ -15,7 +15,6 @@ OBJS = \
 	picirq.o\
 	pipe.o\
 	proc.o\
-	rand.o\
 	sleeplock.o\
 	spinlock.o\
 	string.o\
@@ -146,7 +145,7 @@ tags: $(OBJS) entryother.S _init
 vectors.S: vectors.pl
 	./vectors.pl > vectors.S
 
-ULIB = ulib.o usys.o printf.o umalloc.o rand.o
+ULIB = ulib.o usys.o printf.o umalloc.o
 
 _%: %.o $(ULIB)
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^

@@ -6,7 +6,6 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
-#include "rand.h" // ! ------------------------------------------------------------------------
 
 struct {
   struct spinlock lock;
@@ -94,14 +93,18 @@ found:
   /**
    *  ? VALIDAÇÃO DA QUANTIDADE DE BILHETES */
 
+  int tmpBilhetes = 0;
+
   if (bilhetes < NBILHETES_MIN) {         // ! Se a quantidade de bilhetes for menor que a quantidade mínima exigida
-    p->bilhetes = NBILHETES_MIN;          // ! ele seta a qntd mínima
+    tmpBilhetes = NBILHETES_MIN;                  // ! ele seta a qntd mínima
   } else if (bilhetes > NBILHETES_MAX) {  // ! Se a quantidade de bilhetes for maior que a quantidade máxima 
-    p->bilhetes = NBILHETES_MAX;          // ! ele seta a qntd máxima
+    tmpBilhetes = NBILHETES_MAX;                  // ! ele seta a qntd máxima
   } else {                                // ! Se estiver dentro dos parâmetros ele seta a quantidade normal
-    p->bilhetes = bilhetes;               // ! Seta a quantidade definida pelo usuário 
+    tmpBilhetes = bilhetes;                       // ! Seta a quantidade definida pelo usuário 
   }
-  
+
+  p->tamanhoPassada = 10000/tmpBilhetes;          // ! Seta o tamanho da passada de acordo com a quantidade de bilhetes
+  p->passadaAtual = p->tamanhoPassada;
   
 
   release(&ptable.lock);
@@ -138,7 +141,7 @@ userinit(void)
   struct proc *p;
   extern char _binary_initcode_start[], _binary_initcode_size[];
 
-  p = allocproc(10); // ! ------------------------------------------------------------------------
+  p = allocproc(100); // ! ------------------------------------------------------------------------
   
   initproc = p;
   if((p->pgdir = setupkvm()) == 0)
@@ -340,8 +343,7 @@ wait(void)
 void
 scheduler(void) // ! ------------------------------------------------------------------------
 {
-  int oSortudo = 0;
-  int intervaloBilhetes[NPROC];
+
   struct proc *p;
   struct cpu *c = mycpu();
 
@@ -354,55 +356,31 @@ scheduler(void) // ! -----------------------------------------------------------
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
 
-    // Inicializa o vetor de intervalo de bilhetes
-    for (int j = 0; j < NPROC; j++) {
-      intervaloBilhetes[j] = 0;
-    }
-    
-    int qtdBilhetesDisponiveis = 0;
-    int v = 0;
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++ ,v++){
+    int menor = 10000000;
 
-      if(p->state == RUNNABLE){
-        qtdBilhetesDisponiveis += p->bilhetes;
-        intervaloBilhetes[v] = p->bilhetes;
-        //intervaloBilhetes[p->pid] = p->bilhetes; //processo = 10, intervaloBilhetes[10] = 10
-        //cprintf("%d\n", p->bilhetes);                                                     
-      }
-    }
+    int idx_menor = 0;
 
-    /* for(int i = 0; i < NPROC; i++) {
-      cprintf("%d ", intervaloBilhetes[i]);
-    } */
+    // * PEGA O ID DO PROCESSO (PRONTO) QUE TEM A MENOR PASSADA
 
-    //cprintf("\nqtdBilhetesDisponiveis: %d\n", qtdBilhetesDisponiveis);
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
 
-    
-    oSortudo = random_at_most(qtdBilhetesDisponiveis);       // TA FUNCIONANDO
-    
-    //cprintf("o Sortudo: %d\n", oSortudo);
-    int soma = 0;
-    int indexDoSorteado = 0;
-    //int idDoSorteado = 0;m
+      if (p->state != RUNNABLE) continue;
 
-    while(soma < oSortudo) {                        // enquanto a soma for menor que o sortudo 
-      soma += intervaloBilhetes[indexDoSorteado];   // soma o intervalo de bilhetes do processo i
-      indexDoSorteado++;
+      if (p->passadaAtual >= menor) continue;
+
+      menor = p->passadaAtual;
+      idx_menor = p->pid;
     }
 
-    //cprintf("indexDoSorteado: %d\n", indexDoSorteado-1);
-
-    int x = 0;
-    indexDoSorteado = indexDoSorteado - 1;
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++, x++){
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
 
       if(p->state != RUNNABLE) continue;
 
+      if (p->pid != idx_menor) continue;
 
-      if (x != indexDoSorteado) continue;
-
+      // ! DESCOBRE QUAL O PROCESSO COM A PASSADA MENOR
       p->vzsEscolhido++;
-      //cprintf("p %d foi esclh %d vzs\n", p->pid, p->vzsEscolhido);
+      p->passadaAtual += p->tamanhoPassada;
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
@@ -579,9 +557,9 @@ procdump(void) // ! ------------------------------------------------------------
   struct proc *p;
   char *state;
   //uint pc[10];
-  cprintf("+-------+--------+------+----------------------+\n");
-  cprintf("|PID    |STATE   |NOME  |BILHETES - QTd.ESCLHD \n");
-  cprintf("+-------+--------+------+----------------------+\n");
+  cprintf("+-------+--------+------+----------------------------+\n");
+  cprintf("|PID    |STATE   |NOME  |TAM.PASS | PASS.AT | VZS.ESCLH \n");
+  cprintf("+-------+--------+------+----------------------------+\n");
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->state == UNUSED)
       continue;
@@ -589,7 +567,7 @@ procdump(void) // ! ------------------------------------------------------------
       state = states[p->state];
     else
       state = "???";
-    cprintf("|  %d    |%s  |%s\t|   %d   -   %d    ", p->pid, state, p->name, p->bilhetes, p->vzsEscolhido);
+    cprintf("|  %d    |%s  |%s   |%d   |%d   %d", p->pid, state, p->name, p->tamanhoPassada, p->passadaAtual, p->vzsEscolhido);
     /* if(p->state == SLEEPING){
       getcallerpcs((uint*)p->context->ebp+2, pc);
       for(i=0; i<10 && pc[i] != 0; i++)
@@ -597,7 +575,7 @@ procdump(void) // ! ------------------------------------------------------------
     } */
     cprintf("\n");
   }
-  cprintf("+-------+--------+------+------------+----------+\n\n");
+  cprintf("+-------+--------+------+------------+----------------+\n\n");
 }
 
 

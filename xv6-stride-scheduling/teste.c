@@ -45,7 +45,13 @@ int main(int argc, char *argv[]) {
     exit();
 }
 
-
+void gastacpu(){
+    for (int c = 0; c < 1742000; c++){
+                for (int d = 0; d < 1739000; d++){
+                    c = d * 1234.56 + c % 12346;
+                }
+            }
+}
 
 
 /* teste com definição de bilhetes e processamento de ~3s*/
@@ -58,11 +64,13 @@ int teste0() {
     for (int i = 0; i < N; i++) {
         pid = fork(bilhetes[i]);
         if (pid == 0) {
-            for (int c = 0; c < 1742000; c++){
-                for (int d = 0; d < 1739000; d++){
-                    c = d * 1234.56 + c % 12346;
-                }
+            for (int i = 0; i < 20; i++){   // 5 -> processamento de ~5s
+                                            // 10 -> processamento de ~9s
+                                            // 20 -> processamento de ~17s
+                                            // 40 -> processamento de ~34s
+                gastacpu();
             }
+            
             printf(1, "P:%d B:%d\n",getpid(), bilhetes[i]);
             exit();
         }
@@ -109,12 +117,8 @@ int teste2() {
     for (int i = 1; i < 10; i++) {
         pid = fork(10+i*40);
         if (pid == 0) {
-
-
-            for (int c = 0; c < 1742000; c++){
-                for (int d = 0; d < 1739000; d++){
-                    c = d * 1234.56 + c % 12346;
-                }
+            for (int i = 0; i < 20; i++){ 
+                gastacpu();
             }
             printf(1, "P:%d B:%d\n",getpid(), 10+i*40);
             exit();
@@ -159,10 +163,8 @@ int teste4(int n, int *v) {
     for (int i = 2; i < n; i++) {
         pid = fork(v[i]);
         if (pid == 0) {
-            for (int c = 0; c < 1742000; c++){
-                for (int d = 0; d < 1739000; d++){
-                    c = d * 1234.56 + c % 12346;
-                }
+            for (int i = 0; i < 20; i++){ 
+                gastacpu();
             }
             printf(1, "P:%d B:%d\n",getpid(), v[i]);
             exit();

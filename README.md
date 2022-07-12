@@ -79,9 +79,9 @@ default de bilhetes. Assumir também um número máximo de bilhetes que um proce
       - `<op> = 3`: Teste SEM definição de bilhetes e processamento INFINITO.
       - `<op> = 4`: Teste COM definição de bilhetes no SHELL e processamento FINITO.
       - `<op> = 5`: Teste COM definição de bilhetes no SHELL e processamento INFINITO.
-    - Para verificar o funcionamento do escalonador nas opções `<op> = 1` e `<op> = 3` você deve pressionar `CTRL + P` no emulador. Assim você verá os processos que estão sendo executados e suas respectivas informações. Para parar o processamento e fazer mais testes pressione `CTRL + K` para matar os processos.
+    - Para verificar o funcionamento do escalonador nas opções `<op> = 1`, `<op> = 3` e `<op> = 5` você deve pressionar `CTRL + P` no emulador. Assim o emulador vai listar os processos que estão sendo executados e suas respectivas informações. Para parar o processamento e fazer mais testes pressione `CTRL + K` para matar os processos.
     - Para as opções `<op> = 4` e `<op> = 5` você deve inserir a quantidade de bilhetes de cada processo, exemplo:
-    ```
+    ```bash
       $ teste 4 100 200 450 879
     ```
 

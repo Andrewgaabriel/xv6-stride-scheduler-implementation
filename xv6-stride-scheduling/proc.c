@@ -356,9 +356,9 @@ scheduler(void) // ! -----------------------------------------------------------
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
 
-    int menor = 10000000;
+    int menorPassada = 10000000;
 
-    int idx_menor = 0;
+    int idDoMenor = 0;
 
     // * PEGA O ID DO PROCESSO (PRONTO) QUE TEM A MENOR PASSADA
 
@@ -366,17 +366,21 @@ scheduler(void) // ! -----------------------------------------------------------
 
       if (p->state != RUNNABLE) continue;
 
-      if (p->passadaAtual >= menor) continue;
+      if (p->passadaAtual > menorPassada) continue;
+      
+      if (p->passadaAtual == menorPassada && p->pid < idDoMenor) continue; // Caso de empate pega o maior pid
 
-      menor = p->passadaAtual;
-      idx_menor = p->pid;
+      //if (p->passadaAtual >= menorPassada) continue;
+
+      menorPassada = p->passadaAtual;
+      idDoMenor = p->pid;
     }
 
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
 
       if(p->state != RUNNABLE) continue;
 
-      if (p->pid != idx_menor) continue;
+      if (p->pid != idDoMenor) continue;
 
       // ! DESCOBRE QUAL O PROCESSO COM A PASSADA MENOR
       p->vzsEscolhido++;

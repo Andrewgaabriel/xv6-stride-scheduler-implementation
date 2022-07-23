@@ -332,6 +332,15 @@ wait(void)
 
 
 
+
+
+
+
+
+
+
+
+
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -340,11 +349,12 @@ wait(void)
 //  - swtch to start running that process
 //  - eventually that process transfers control
 //      via swtch back to the scheduler.
-void
-scheduler(void) // ! ------------------------------------------------------------------------
+/* void
+scheduler(void) // ! VERSÃO 1.0 COM DOIS FOR  (MENOS EFICIENTE)
 {
 
   struct proc *p;
+  struct proc *aux;
   struct cpu *c = mycpu();
 
   c->proc = 0;
@@ -352,15 +362,12 @@ scheduler(void) // ! -----------------------------------------------------------
   for(;;){
     // Enable interrupts on this processor.
     sti();
-    
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
 
     int menorPassada = 10000000;
 
     int idDoMenor = 0;
-
-    // * PEGA O ID DO PROCESSO (PRONTO) QUE TEM A MENOR PASSADA
 
     for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
 
@@ -370,11 +377,11 @@ scheduler(void) // ! -----------------------------------------------------------
       
       if (p->passadaAtual == menorPassada && p->pid < idDoMenor) continue; // Caso de empate pega o maior pid
 
-      //if (p->passadaAtual >= menorPassada) continue;
-
       menorPassada = p->passadaAtual;
+
       idDoMenor = p->pid;
     }
+
 
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
 
@@ -382,23 +389,82 @@ scheduler(void) // ! -----------------------------------------------------------
 
       if (p->pid != idDoMenor) continue;
 
-      // ! DESCOBRE QUAL O PROCESSO COM A PASSADA MENOR
       p->vzsEscolhido++;
+
       p->passadaAtual += p->tamanhoPassada;
+
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
-      
-      //cprintf("Running - PID: %d - Bilhetes: %d\n", p->pid, p->bilhetes);
       swtch(&(c->scheduler), p->context);
       switchkvm();
       c->proc = 0;
 
-      break;
     }
+
+    release(&ptable.lock);                                       
+  }
+}  */
+
+
+
+//PAGEBREAK: 42
+// Per-CPU process scheduler.
+// Each CPU calls scheduler() after setting itself up.
+// Scheduler never returns.  It loops, doing:
+//  - choose a process to run
+//  - swtch to start running that process
+//  - eventually that process transfers control
+//      via swtch back to the scheduler.
+void
+scheduler(void) // ! VERSÃO 2.0 COM UM FOR  (MAIS EFICIENTE)
+{
+
+  struct proc *p;
+  struct proc *aux;
+  struct cpu *c = mycpu();
+
+  c->proc = 0;
+  
+  for(;;){
+    // Enable interrupts on this processor.
+    sti();
+    // Loop over process table looking for process to run.
+    acquire(&ptable.lock);
+
+    int menorPassada = 10000000;
+
+    aux = ptable.proc; // Trata o caso do menor ser o primeiro
+
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+
+      if(p->state != RUNNABLE) continue;
+
+      if (menorPassada >= p->passadaAtual) {
+
+        menorPassada = p->passadaAtual;
+        aux = p;
+      }
+    }
+
+    p = aux;
+
+    p->vzsEscolhido++;
+    p->passadaAtual += p->tamanhoPassada;
+
+    c->proc = p;
+    switchuvm(p);
+    p->state = RUNNING;
+    swtch(&(c->scheduler), p->context);
+    switchkvm();
+    c->proc = 0;
+
     release(&ptable.lock);                                       
   }
 } // ! ------------------------------------------------------------------------
+
+
+
 
 
 // Enter scheduler.  Must hold only ptable.lock

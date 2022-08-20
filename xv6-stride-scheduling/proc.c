@@ -331,16 +331,6 @@ wait(void)
 }
 
 
-
-
-
-
-
-
-
-
-
-
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -462,8 +452,6 @@ scheduler(void) // ! VERSÃO 2.0 COM UM FOR  (MAIS EFICIENTE)
     release(&ptable.lock);                                       
   }
 } // ! ------------------------------------------------------------------------
-
-
 
 
 
